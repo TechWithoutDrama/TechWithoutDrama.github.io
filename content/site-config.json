@@ -1,0 +1,11 @@
+{
+  "title": "Tech Without Drama",
+  "description": "Tech reviews, coding tutorials, and industry analysis without the hype.",
+  "channelId": "UC_YOUR_CHANNEL_ID",
+  "social": {
+    "youtube": "https://youtube.com/@TechWithoutDrama",
+    "twitter": "https://twitter.com/techwodrama",
+    "github": "https://github.com/techwodrama"
+  },
+  "contactEmail": "hello@example.com"
+}
