@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { getTheme } from './theme/theme';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -9,28 +9,45 @@ import BlogPost from './pages/BlogPost';
 import Upcoming from './pages/Upcoming';
 import Contact from './pages/Contact';
 
+export type ThemeColor = 'theme-noir' | 'theme-navy' | 'theme-brown' | 'theme-sage';
+
 function App() {
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [mode, setMode] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('themeMode');
-    return (saved as 'light' | 'dark') || (prefersDarkMode ? 'dark' : 'light');
+  // State for Color Theme
+  const [themeColor, setThemeColor] = useState<ThemeColor>(() => {
+    return (localStorage.getItem('selectedTheme') as ThemeColor) || 'theme-noir';
   });
 
+  // State for Light/Dark Mode
+  const [isLightMode, setIsLightMode] = useState(() => {
+    return localStorage.getItem('lightMode') === 'true';
+  });
+
+  // Apply classes to Body
   useEffect(() => {
-    localStorage.setItem('themeMode', mode);
-  }, [mode]);
+    document.body.className = themeColor;
+    if (isLightMode) {
+      document.body.classList.add('light-mode');
+    }
+    
+    localStorage.setItem('selectedTheme', themeColor);
+    localStorage.setItem('lightMode', String(isLightMode));
+  }, [themeColor, isLightMode]);
 
-  const toggleTheme = () => {
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  const theme = useMemo(() => getTheme(mode), [mode]);
+  const toggleLightMode = () => setIsLightMode(!isLightMode);
+  
+  // MUI Theme Bridge
+  const muiTheme = useMemo(() => getTheme(isLightMode ? 'light' : 'dark'), [isLightMode]);
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={muiTheme}>
       <CssBaseline />
       <Router>
-        <Layout toggleTheme={toggleTheme} mode={mode}>
+        <Layout 
+          themeColor={themeColor} 
+          setThemeColor={setThemeColor} 
+          isLightMode={isLightMode} 
+          toggleLightMode={toggleLightMode}
+        >
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
