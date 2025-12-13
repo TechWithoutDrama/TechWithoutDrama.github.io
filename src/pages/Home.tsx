@@ -1,81 +1,130 @@
 import { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent, Box, Button, Skeleton } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { fetchContent, SiteConfig } from '../utils/content';
-
-interface ChannelStats {
-  subscriberCount: string;
-  viewCount: string;
-  videoCount: string;
-}
+import { Container, Typography, Box, Button, Grid } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { fetchContent, BlogPost } from '../utils/content';
 
 export default function Home() {
-  const [stats, setStats] = useState<ChannelStats | null>(null);
-  const [config, setConfig] = useState<SiteConfig | null>(null);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
-    // Fetch local content
-    fetchContent().then(data => setConfig(data.config));
-
-    // Fetch generated stats
-    fetch('./data/channel-stats.json')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(err => console.warn('Could not load stats', err));
+    fetchContent().then(data => setPosts(data.blogs));
   }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
-      {/* Hero */}
-      <Box sx={{ mb: 8, textAlign: { xs: 'center', md: 'left' } }}>
-        <Typography variant="h2" gutterBottom className="text-gradient">
-          {config?.title || "Tech Without Drama"}
-        </Typography>
-        <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: 600 }}>
-          {config?.description || "Loading..."}
-        </Typography>
-        <Button 
-          variant="contained" 
-          size="large" 
-          startIcon={<PlayArrowIcon />}
-          href={config?.social?.youtube}
-          target="_blank"
-          sx={{ borderRadius: 50, px: 4 }}
-        >
-          Subscribe
-        </Button>
-      </Box>
+    <Container maxWidth="md">
+      {posts.map((post, index) => (
+        <VisualPostCard key={post.slug} post={post} index={index} />
+      ))}
 
-      {/* Stats Cards */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <StatCard label="Subscribers" value={stats?.subscriberCount} delay={0} />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard label="Total Views" value={stats?.viewCount} delay={0.1} />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard label="Videos" value={stats?.videoCount} delay={0.2} />
-        </Grid>
-      </Grid>
+      {posts.length === 0 && (
+        <Typography variant="h5" align="center" sx={{ mt: 10, color: 'var(--text-sub)' }}>
+          Loading content...
+        </Typography>
+      )}
     </Container>
   );
 }
 
-function StatCard({ label, value, delay }: { label: string, value?: string, delay: number }) {
-  // Add formatNumber helper here
-  const displayValue = value ? parseInt(value).toLocaleString() : null;
+// The Component matching the "Visual Blog" Layout
+function VisualPostCard({ post, index }: { post: BlogPost, index: number }) {
+  // Visual placeholders based on index to simulate the design
+  const portraitImg = `https://images.unsplash.com/photo-${index % 2 === 0 ? '1534528741775-53994a69daeb' : '1598885511440-218a568c600d'}?q=80&w=800&auto=format&fit=crop&saturation=-100`;
+  const wideImg = `https://images.unsplash.com/photo-${index % 2 === 0 ? '1529139574466-a302d27f60d0' : '1490750967868-58cb75063ed4'}?q=80&w=1200&auto=format&fit=crop&saturation=-100`;
+  const category = post.tags[0] || "Editor's Choice";
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-      <CardContent sx={{ textAlign: 'center' }}>
-        <Typography variant="overline" color="text.secondary">{label}</Typography>
-        {displayValue ? (
-          <Typography variant="h3" fontWeight="bold">{displayValue}</Typography>
-        ) : (
-          <Skeleton variant="text" width={100} height={60} sx={{ mx: 'auto' }} />
-        )}
-      </CardContent>
-    </Card>
+    <Box 
+      className="fade-up"
+      sx={{ 
+        mb: 15, 
+        borderBottom: '1px solid var(--border)', 
+        pb: 8,
+        animationDelay: `${index * 0.2}s`
+      }}
+    >
+      {/* Meta Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="overline" sx={{ color: 'var(--text-sub)', fontWeight: 600, letterSpacing: 1 }}>
+          {category}
+        </Typography>
+        <Typography variant="overline" sx={{ color: 'var(--text-sub)', fontWeight: 600, letterSpacing: 1 }}>
+          {new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+        </Typography>
+      </Box>
+
+      {/* Top Section: Portrait + Content */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Box sx={{ 
+            position: 'relative', 
+            width: '100%', 
+            aspectRatio: '4/3', 
+            overflow: 'hidden', 
+            borderRadius: 1 
+          }}>
+            <img 
+              src={portraitImg} 
+              alt={post.title} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Typography 
+            sx={{ 
+              fontStyle: 'italic', 
+              fontSize: '1.1rem', 
+              lineHeight: 1.6, 
+              mb: 3, 
+              color: 'var(--text-main)',
+              fontWeight: 300
+            }}
+          >
+            "{post.excerpt}"
+          </Typography>
+          
+          <Typography 
+            variant="h2" 
+            sx={{ 
+              fontSize: { xs: '2.5rem', md: '3.5rem' }, 
+              color: 'var(--accent)', 
+              mb: 1,
+              lineHeight: 1
+            }}
+          >
+            {post.title}
+          </Typography>
+
+          <Typography variant="body2" sx={{ color: 'var(--text-sub)', mb: 4 }}>
+            Author: TechWithoutDrama
+          </Typography>
+
+          <Box>
+            <Button 
+              component={RouterLink} 
+              to={`/blog/${post.slug}`}
+              variant="outlined"
+            >
+              Read Analysis
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Bottom Section: Wide Image */}
+      <Box sx={{ 
+        width: '100%', 
+        aspectRatio: '21/9', 
+        overflow: 'hidden', 
+        borderRadius: 1 
+      }}>
+        <img 
+          src={wideImg} 
+          alt="Wide Cinematic Shot" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(10%)' }} 
+        />
+      </Box>
+    </Box>
   );
 }
